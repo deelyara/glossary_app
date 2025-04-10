@@ -47,7 +47,7 @@ class GlossaryAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             const SizedBox(width: 12),
             const Text(
-              'Translation Studio',
+              'Easyling',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

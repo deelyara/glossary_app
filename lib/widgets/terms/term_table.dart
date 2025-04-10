@@ -341,20 +341,59 @@ class TermTable extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  onPressed: () => onRejectTerm(term),
-                  icon: const Icon(Icons.close, color: AppTheme.errorColor),
-                  tooltip: 'Reject',
-                  constraints: const BoxConstraints(),
-                  padding: const EdgeInsets.all(8),
+                // Improved Reject Button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onRejectTerm(term),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Tooltip(
+                        message: 'Reject term',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.close, 
+                            color: AppTheme.errorColor,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () => onAddTerm(term),
-                  icon: const Icon(Icons.add_circle_outline, color: AppTheme.successColor),
-                  tooltip: 'Add',
-                  constraints: const BoxConstraints(),
-                  padding: const EdgeInsets.all(8),
+                const SizedBox(width: 12),
+                // Improved Add Button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onAddTerm(term),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Tooltip(
+                        message: 'Add to glossary',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.successColor.withOpacity(0.1),
+                            border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.add,
+                            color: AppTheme.successColor,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

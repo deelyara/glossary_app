@@ -44,7 +44,7 @@ class TermActions extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppTheme.primaryColor),
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -58,16 +58,6 @@ class TermActions extends StatelessWidget {
           onPressed: onTranslate,
           icon: Icons.translate,
           label: 'Translate',
-        ),
-        
-        const SizedBox(width: 12),
-        
-        // Detect terms button (primary action)
-        _buildActionButton(
-          onPressed: onDetectTerms,
-          icon: Icons.auto_awesome,
-          label: 'Detect terms',
-          isPrimary: true,
         ),
         
         const SizedBox(width: 12),
@@ -88,44 +78,33 @@ class TermActions extends StatelessWidget {
     required String label,
     bool isPrimary = false,
   }) {
+    final ButtonStyle style = ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      textStyle: const TextStyle(fontWeight: FontWeight.w500),
+    );
+
     if (isPrimary) {
       return ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+        label: Text(label),
+        style: style.copyWith(
+          backgroundColor: MaterialStateProperty.all(AppTheme.primaryColor),
+          foregroundColor: MaterialStateProperty.all(Colors.white),
+          elevation: MaterialStateProperty.all(0),
         ),
       );
     } else {
       return OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: AppTheme.textPrimaryColor,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.textPrimaryColor,
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+        label: Text(label),
+        style: style.copyWith(
+          foregroundColor: MaterialStateProperty.all(AppTheme.textPrimaryColor),
+          side: MaterialStateProperty.all(BorderSide(color: Colors.grey.shade300)),
         ),
       );
     }
