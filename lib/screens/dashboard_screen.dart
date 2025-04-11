@@ -431,6 +431,19 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                                   },
                                                   onAddTerm: _addTerm,
                                                   onRejectTerm: _rejectTerm,
+                                                  onDetectTerms: _showDetectionModalDialog,
+                                                  onTranslate: () {
+                                                    // Translate functionality
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: const Text('Translating terms...'),
+                                                        behavior: SnackBarBehavior.floating,
+                                                        duration: const Duration(seconds: 2),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                        margin: const EdgeInsets.all(16),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                         ),
                                       ],

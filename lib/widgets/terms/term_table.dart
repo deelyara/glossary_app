@@ -1,7 +1,8 @@
 // lib/widgets/terms/term_table.dart
 import 'package:flutter/material.dart';
 import '../../models/term.dart';
-import '../../config/theme.dart';
+import '../../config/colors.dart';
+import 'no_terms_widget.dart';
 
 class TermTable extends StatelessWidget {
   final List<Term> terms;
@@ -9,6 +10,8 @@ class TermTable extends StatelessWidget {
   final Function(Term, bool) onCaseSensitiveToggle;
   final Function(Term) onAddTerm;
   final Function(Term) onRejectTerm;
+  final VoidCallback? onDetectTerms;
+  final VoidCallback? onTranslate;
 
   const TermTable({
     super.key,
@@ -17,6 +20,8 @@ class TermTable extends StatelessWidget {
     required this.onCaseSensitiveToggle,
     required this.onAddTerm,
     required this.onRejectTerm,
+    this.onDetectTerms,
+    this.onTranslate,
   });
 
   @override
@@ -52,9 +57,9 @@ class TermTable extends StatelessWidget {
                 flex: 2,
                 child: Text(
                   'Term',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryColor,
+                    color: ColorUtils.textPrimaryColorValue,
                     fontSize: 14,
                   ),
                 ),
@@ -63,9 +68,9 @@ class TermTable extends StatelessWidget {
                 flex: 1,
                 child: Text(
                   'Usage score',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryColor,
+                    color: ColorUtils.textPrimaryColorValue,
                     fontSize: 14,
                   ),
                 ),
@@ -74,9 +79,9 @@ class TermTable extends StatelessWidget {
                 flex: 3,
                 child: Text(
                   'Examples',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryColor,
+                    color: ColorUtils.textPrimaryColorValue,
                     fontSize: 14,
                   ),
                 ),
@@ -86,9 +91,9 @@ class TermTable extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'Do not translate',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryColor,
+                      color: ColorUtils.textPrimaryColorValue,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -100,9 +105,9 @@ class TermTable extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'Case sensitive',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryColor,
+                      color: ColorUtils.textPrimaryColorValue,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -114,9 +119,9 @@ class TermTable extends StatelessWidget {
                 child: Center(
                   child: Text(
                     'Actions',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryColor,
+                      color: ColorUtils.textPrimaryColorValue,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -132,62 +137,10 @@ class TermTable extends StatelessWidget {
           ...terms.map((term) => _buildTermRow(context, term)),
         
         // Empty state
-        if (terms.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(36),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-                left: BorderSide(color: Colors.grey.shade300),
-                right: BorderSide(color: Colors.grey.shade300),
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Column(
-              children: [
-                Icon(
-                  Icons.list_alt_outlined,
-                  size: 48,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'There are no more term candidates to review',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.textPrimaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Run again if you\'ve added new content to your website.',
-                  style: TextStyle(
-                    color: AppTheme.textSecondaryColor,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Detect terms'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        if (terms.isEmpty && onDetectTerms != null)
+          NoTermsWidget(
+            onDetectTerms: onDetectTerms!,
+            onTranslate: onTranslate,
           ),
           
         // Bottom border when we have items
@@ -248,7 +201,7 @@ class TermTable extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _getScoreColor(term.usageScore),
+                      color: _getScoreColor(context, term.usageScore),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -304,9 +257,9 @@ class TermTable extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 32),
                       child: Text(
                         'Found on: ${term.exampleSources[index]}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: AppTheme.textTertiaryColor,
+                          color: ColorUtils.textTertiaryColorValue,
                         ),
                       ),
                     ),
@@ -322,7 +275,7 @@ class TermTable extends StatelessWidget {
               child: Switch(
                 value: term.doNotTranslate,
                 onChanged: (value) => onDoNotTranslateToggle(term, value),
-                activeColor: AppTheme.primaryColor,
+                activeColor: ColorUtils.primaryColorValue,
               ),
             ),
           ),
@@ -332,7 +285,7 @@ class TermTable extends StatelessWidget {
               child: Switch(
                 value: term.caseSensitive,
                 onChanged: (value) => onCaseSensitiveToggle(term, value),
-                activeColor: AppTheme.primaryColor,
+                activeColor: ColorUtils.primaryColorValue,
               ),
             ),
           ),
@@ -353,13 +306,13 @@ class TermTable extends StatelessWidget {
                         message: 'Reject term',
                         child: Container(
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+                            border: Border.all(color: ColorUtils.errorColorValue.withOpacity(0.3)),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           padding: const EdgeInsets.all(6),
                           child: Icon(
                             Icons.close, 
-                            color: AppTheme.errorColor,
+                            color: ColorUtils.errorColorValue,
                             size: 18,
                           ),
                         ),
@@ -380,14 +333,14 @@ class TermTable extends StatelessWidget {
                         message: 'Add to glossary',
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppTheme.successColor.withOpacity(0.1),
-                            border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+                            color: ColorUtils.successColorValue.withOpacity(0.1),
+                            border: Border.all(color: ColorUtils.successColorValue.withOpacity(0.3)),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           padding: const EdgeInsets.all(6),
                           child: Icon(
                             Icons.add,
-                            color: AppTheme.successColor,
+                            color: ColorUtils.successColorValue,
                             size: 18,
                           ),
                         ),
@@ -403,13 +356,13 @@ class TermTable extends StatelessWidget {
     );
   }
   
-  Color _getScoreColor(double score) {
+  Color _getScoreColor(BuildContext context, double score) {
     if (score >= 30) {
-      return AppTheme.successColor; // High relevance
+      return ColorUtils.successColorValue; // High relevance
     } else if (score >= 20) {
-      return AppTheme.primaryColor; // Medium relevance
+      return ColorUtils.primaryColorValue; // Medium relevance
     } else {
-      return AppTheme.warningColor; // Low relevance
+      return ColorUtils.warningColorValue; // Low relevance
     }
   }
 }
