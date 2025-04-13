@@ -1,39 +1,47 @@
 class Term {
+  final String id;
   final String text;
-  final double usageScore;
-  final List<String> examples;
-  final List<String> exampleSources;
+  String? translation;
+  List<String> examples;
+  List<String>? exampleSources;
   bool doNotTranslate;
   bool caseSensitive;
-  final String? translation;
+  bool confirmed;
+  double usageScore;
 
   Term({
+    required this.id,
     required this.text,
-    required this.usageScore,
-    required this.examples,
-    required this.exampleSources,
+    this.translation,
+    this.examples = const [],
+    this.exampleSources,
     this.doNotTranslate = false,
     this.caseSensitive = false,
-    this.translation,
+    this.confirmed = false,
+    this.usageScore = 0.0,
   });
 
   Term copyWith({
+    String? id,
     String? text,
-    double? usageScore,
+    String? translation,
     List<String>? examples,
     List<String>? exampleSources,
     bool? doNotTranslate,
     bool? caseSensitive,
-    String? translation,
+    bool? confirmed,
+    double? usageScore,
   }) {
     return Term(
+      id: id ?? this.id,
       text: text ?? this.text,
-      usageScore: usageScore ?? this.usageScore,
-      examples: examples ?? this.examples,
+      translation: translation ?? this.translation,
+      examples: examples ?? List.from(this.examples),
       exampleSources: exampleSources ?? this.exampleSources,
       doNotTranslate: doNotTranslate ?? this.doNotTranslate,
       caseSensitive: caseSensitive ?? this.caseSensitive,
-      translation: translation ?? this.translation,
+      confirmed: confirmed ?? this.confirmed,
+      usageScore: usageScore ?? this.usageScore,
     );
   }
 }

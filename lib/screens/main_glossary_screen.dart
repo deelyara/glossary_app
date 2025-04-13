@@ -12,6 +12,7 @@ import '../widgets/detection/detection_dialog.dart';
 import '../widgets/detection/detection_progress_banner.dart';
 import '../widgets/detection/detection_finished_banner.dart';
 import '../config/colors.dart';
+import 'main_glossary_screen_fix.dart';
 
 class MainGlossaryScreen extends StatefulWidget {
   const MainGlossaryScreen({super.key});
@@ -34,12 +35,47 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
   };
 
   // State variables to track detection progress
-  bool _isDetectionInProgress = false;
-  bool _detectionFinished = false; // Add state for finished detection
+  bool _detectionFinished = false; // State for finished detection
   bool _isSearchActive = false; // Add state to track if search is active
   bool _showAIReviewTabs = false; // Add state to track if AI review tabs should be shown
   int _selectedTabIndex = 0; // Track selected tab index
   final TextEditingController _searchController = TextEditingController(); // Controller for search text
+  String _searchQuery = ''; // Store the current search query
+  
+  // State for sorting
+  bool _usageScoreSortAscending = true; // Default to ascending
+  bool _isUsageScoreSorted = false; // Track if table is sorted by usage score
+
+  // Map to track selected examples for each term
+  final Map<String, Set<int>> _selectedExamples = {};
+  
+  // Set to track selected term IDs in the main Terms table
+  final Set<String> _selectedTermIds = {};
+
+  // Helper getter to check if any term is selected
+  bool get _isAnyTermSelected => _selectedTermIds.isNotEmpty;
+
+  // Helper to get currently filtered terms (needed for select all)
+  List<Term> _getFilteredTerms(GlossaryService service) {
+    return _searchQuery.isEmpty
+        ? service.allTerms
+        : service.allTerms.where(
+            (term) => term.text.toLowerCase().contains(_searchQuery.toLowerCase())
+          ).toList();
+  }
+
+  // Toggle selection for all visible terms
+  void _toggleSelectAll(bool? newValue, List<Term> filteredTerms) {
+    setState(() {
+      if (newValue == true) {
+        // Select all
+        _selectedTermIds.addAll(filteredTerms.map((term) => term.id));
+      } else {
+        // Deselect all
+        _selectedTermIds.clear();
+      }
+    });
+  }
 
   void _showDetectionDialog() {
     showDialog(
@@ -57,17 +93,27 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
   }
 
   void _startDetection() {
-    // Reset finished state and start progress
-    setState(() {
-      _isDetectionInProgress = true;
-      _detectionFinished = false; // Reset finished state when starting
-    });
+    // Show a snack bar for detection progress instead of banner
+    final snackBar = SnackBar(
+      content: Text(
+        'AI detection in progress. You will be notified when it finishes.',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      duration: const Duration(seconds: 4),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      margin: const EdgeInsets.all(16),
+    );
+    
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-    // Example: Simulate detection finishing after 5 seconds
+    // Simulate detection finishing after 5 seconds
     Future.delayed(const Duration(seconds: 5), () {
        if (mounted) { // Check if widget is still in the tree
           setState(() {
-            _isDetectionInProgress = false; // Stop progress
             _detectionFinished = true; // Set finished state to true
           });
        }
@@ -86,6 +132,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
         children: [
           const LeftSidebar(),
           Expanded(
+            // Make entire column scrollable
+            child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -113,14 +161,14 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
                               color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'For changes to the glossary to take effect, you need to publish them.',
-                                  style: TextStyle(color: colorScheme.onPrimaryContainer),
+                                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onPrimaryContainer),
                                 ),
                                 FilledButton(
                                   onPressed: () {},
@@ -148,14 +196,13 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                 ),
 
                 // Conditionally display detection banners here
-                if (_isDetectionInProgress)
-                  const DetectionProgressBanner(),
                 if (_detectionFinished) // Show finished banner when done
                   DetectionFinishedBanner(
                     onReviewCandidates: () {
                       setState(() {
                         _showAIReviewTabs = true; // Show the AI review tabs
                         _selectedTabIndex = 1; // Select the AI suggestions tab
+                          _detectionFinished = false; // Hide the banner after clicking
                       });
                     },
                   ),
@@ -173,7 +220,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                         height: 36,
                         decoration: BoxDecoration(
                           border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
-                          borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           color: colorScheme.surface,
                         ),
                         child: Padding(
@@ -181,12 +228,12 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: 'First glossary update',
-                              icon: const Icon(Icons.arrow_drop_down, size: 20),
-                              style: textTheme.bodyMedium,
+                                icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
+                                style: textTheme.bodyMedium?.copyWith(color: Colors.black),
                               items: const [
                                 DropdownMenuItem(
                                   value: 'First glossary update',
-                                  child: Text('First glossary update'),
+                                    child: Text('First glossary update', style: TextStyle(color: Colors.black)),
                                 ),
                               ],
                               onChanged: (value) {},
@@ -199,7 +246,6 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                         children: [
                           IconButton(icon: const Icon(Icons.download_outlined), onPressed: () {}, tooltip: 'Export glossary', iconSize: 20),
                           IconButton(icon: const Icon(Icons.upload_outlined), onPressed: () {}, tooltip: 'Import glossary', iconSize: 20),
-                          IconButton(icon: const Icon(Icons.add), onPressed: () {}, tooltip: 'Add new term', iconSize: 20),
                           // Replace the search icon button with an AnimatedSwitcher
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
@@ -213,7 +259,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                     height: 36,
                                     decoration: BoxDecoration(
                                       color: colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
                                     ),
                                     child: Row(
@@ -236,7 +282,9 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                               style: const TextStyle(fontSize: 14),
                                               onSubmitted: (value) {
                                                 // Handle search submission
-                                                // TODO: Implement search functionality
+                                                  setState(() {
+                                                    _searchQuery = value.trim();
+                                                  });
                                               },
                                               autofocus: true, // Focus the field when it appears
                                             ),
@@ -248,6 +296,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                             setState(() {
                                               _isSearchActive = false;
                                               _searchController.clear();
+                                                _searchQuery = ''; // Clear the search query
                                             });
                                           },
                                           splashRadius: 16,
@@ -274,12 +323,19 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                   ),
                           ),
                           const SizedBox(width: 8),
+                            // Add vertical divider here
+                            Container(
+                              height: 24,
+                              width: 1,
+                              color: colorScheme.outline.withOpacity(0.3),
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                            ),
                           MenuAnchor(
                             controller: _languageMenuController,
                             style: MenuStyle(
                               maximumSize: MaterialStateProperty.all(const Size(300, 400)),
                               padding: MaterialStateProperty.all(EdgeInsets.zero),
-                              shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                               elevation: MaterialStateProperty.all(3.0),
                             ),
                             menuChildren: [
@@ -336,7 +392,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        '${details['name']} (${details['country']}) | $code',
+                                          '${details['name']} (${details['country']})',
                                         style: textTheme.bodyMedium,
                                       ),
                                     ],
@@ -344,6 +400,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                 );
                               }).toList(),
                             ],
+                              child: Tooltip(
+                                message: 'Switch target language',
                             child: TextButton(
                               onPressed: () {
                                 if (_languageMenuController.isOpen) {
@@ -370,6 +428,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                   const SizedBox(width: 4),
                                   Icon(Icons.arrow_drop_down, size: 20, color: Colors.grey.shade600),
                                 ],
+                                  ),
                               ),
                             ),
                           ),
@@ -381,85 +440,141 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                 Divider(height: 1, thickness: 1, color: colorScheme.outline.withOpacity(0.2)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                       Row(
-                         children: [
-                           // Detect terms button (Styled like Publish, Larger)
-                           FilledButton.icon(
-                              onPressed: _showDetectionDialog,
-                              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                              label: const Text('Detect terms'),
-                              style: FilledButton.styleFrom(
-                                foregroundColor: colorScheme.onPrimary,
-                                backgroundColor: colorScheme.primary,
-                                // Increased padding for wider/taller button
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                   borderRadius: BorderRadius.circular(20),
-                                ),
-                                // Increased font size
-                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
-                                elevation: 0,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Translate button (Styled like Publish, Larger)
-                            FilledButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                              label: const Text('Translate'),
-                              style: FilledButton.styleFrom(
-                                foregroundColor: colorScheme.onPrimary,
-                                backgroundColor: colorScheme.primary,
-                                // Increased padding for wider/taller button
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                   borderRadius: BorderRadius.circular(20),
-                                ),
-                                // Increased font size
-                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
-                                elevation: 0,
-                              ),
-                            ),
-                         ],
-                       )
-                    ],
+                    child: Container(), // Adding an empty container as placeholder
                   ),
-                ),
 
-                Expanded(
-                  child: Padding(
+                  // Table section with fixed height
+                  Padding(
                     padding: const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Add some space above the table if the banner is not showing
-                        if (!_isDetectionInProgress) const SizedBox(height: 16),
+                    children: [
+                        // Add some space above the table
+                        const SizedBox(height: 8),
                         
-                        // Show tabs if AI review is active
+                        // Row with tabs on left and action buttons on right
+                       Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         children: [
+                            // Tabs on the left side (if AI review is active)
+                            if (_showAIReviewTabs)
+                              Row(
+                                children: [
+                                  _buildTab(0, 'Terms', colorScheme),
+                                  _buildTab(1, 'AI suggestions', colorScheme),
+                                ],
+                              )
+                            else
+                              const SizedBox(), // Empty placeholder when tabs are not shown
+                            
+                            // Action buttons 
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end, // Align to the end
+                              children: [
+                                // Show the custom buttons only when Terms tab is active
+                                if (_selectedTabIndex == 0 || !_showAIReviewTabs)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min, // Prevent row from taking extra space
+                                    children: [
+                                       // Delete button
+                                       if (_isAnyTermSelected)
+                                         TextButton.icon(
+                                           onPressed: _deleteSelectedTerms,
+                                           icon: const Icon(Icons.delete_outline, size: 18),
+                                           label: const Text('Delete'),
+                                           style: TextButton.styleFrom(
+                                             foregroundColor: colorScheme.error,
+                                           ),
+                                         ),
+                                        // Add term button
+                                        Tooltip(
+                                          message: 'Add new term',
+                                          child: FilledButton.icon(
+                                            onPressed: () {},
+                                            icon: const Icon(Icons.add, size: 18),
+                                            label: const Text('Add term'),
+                              style: FilledButton.styleFrom(
+                                foregroundColor: colorScheme.onPrimary,
+                                backgroundColor: colorScheme.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                   borderRadius: BorderRadius.circular(20),
+                                ),
+                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                elevation: 0,
+                              ),
+                            ),
+                                        ),
+                                        const SizedBox(width: 8), // Add space between Add and Translate
+                                        // Translate terms button with tooltip
+                                        Tooltip(
+                                          message: 'Translate terms with AI',
+                                          child: FilledButton.icon(
+                                            // Disable if no terms are selected
+                                            onPressed: _isAnyTermSelected ? () { 
+                                              // TODO: Implement translation logic for selected terms
+                                              print('Translating: ${_selectedTermIds.join(', ')}');
+                                            } : null,
+                              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                                            label: const Text('Translate terms'),
+                              style: FilledButton.styleFrom(
+                                foregroundColor: colorScheme.onPrimary,
+                                backgroundColor: colorScheme.primary,
+                                              // Let the theme handle disabled state colors
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                   borderRadius: BorderRadius.circular(20),
+                                ),
+                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8), // Space before Detect button
+                                    ], // End of "Terms" specific buttons row
+                                  ),
+                                  
+                                // Detect terms button - only show if not on AI suggestions tab
+                                if (_selectedTabIndex == 0 || !_showAIReviewTabs)
+                                  Tooltip(
+                                    message: 'Detect terms with AI',
+                                    child: OutlinedButton.icon(
+                                      onPressed: _showDetectionDialog,
+                                      icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                                      label: const Text('Detect terms'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: colorScheme.primary,
+                                        side: BorderSide(color: colorScheme.primary),
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                      ),
+                              ),
+                            ),
+                         ],
+                            ),
+                          ],
+                        ),
+                        
+                        // Tab content bar (only shown when tabs are active)
                         if (_showAIReviewTabs)
                           Container(
-                            margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
                               border: Border(
                                 bottom: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                _buildTab(0, 'Terms', colorScheme),
-                                _buildTab(1, 'AI suggestions', colorScheme),
-                              ],
-                            ),
                           ),
                         
-                        Expanded(
-                          child: Container(
+                        const SizedBox(height: 16),
+                        
+                        // Fixed height container for table
+                        Container(
+                          height: 600, // Fixed height for the table section
                             decoration: BoxDecoration(
                               border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
-                              borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
                               children: [
@@ -468,8 +583,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                   decoration: BoxDecoration(
                                     color: colorScheme.surfaceVariant,
                                     borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(8),
-                                      topRight: Radius.circular(8),
+                                    topLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
                                     ),
                                     border: Border(
                                       bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
@@ -477,11 +592,21 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                   ),
                                   child: Row(
                                     children: [
+                                    // Select all checkbox header (fixed width)
                                       SizedBox(
                                         width: 40,
                                         child: Checkbox(
-                                          value: false,
-                                          onChanged: (value) {},
+                                        // Determine state based on selection
+                                        value: _selectedTermIds.isNotEmpty &&
+                                               _selectedTermIds.length == _getFilteredTerms(glossaryService).length,
+                                        tristate: true, // Allows intermediate state
+                                        onChanged: (value) {
+                                          // Only toggle if there are terms to select/deselect
+                                          final filtered = _getFilteredTerms(glossaryService);
+                                          if (filtered.isNotEmpty) {
+                                             _toggleSelectAll(value, filtered);
+                                          }
+                                        },
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(4),
                                           ),
@@ -489,6 +614,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                         ),
                                       ),
+                                    
+                                    // Term column
                                       Expanded(
                                         flex: 2,
                                         child: Text(
@@ -496,36 +623,69 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
                                             color: colorScheme.onSurfaceVariant,
-                                            fontSize: 14,
+                                            fontSize: 12,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
+                                          textAlign: TextAlign.left,
                                         ),
                                       ),
-                                      // Show different columns based on selected tab
-                                      if (_showAIReviewTabs && _selectedTabIndex == 1) 
-                                        // AI suggestions tab columns
-                                        ...[
-                                          // Usage score
+                                    
+                                    // Conditional columns based on the selected tab
+                                    if (_selectedTabIndex == 1 && _showAIReviewTabs) ...[
+                                      // Usage score column
                                           Expanded(
                                             flex: 1,
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  'Usage score',
+                                        child: Center(
+                                          child: Text(
+                                            'Usage Score',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     color: colorScheme.onSurfaceVariant,
-                                                    fontSize: 14,
+                                                    fontSize: 12,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
+                                                  textAlign: TextAlign.center,
                                                 ),
-                                                Icon(
-                                                  Icons.unfold_more,
-                                                  size: 16,
-                                                  color: colorScheme.onSurfaceVariant,
-                                                ),
-                                              ],
+                                        ),
+                                      ),
+                                      
+                                      // Do Not Translate column
+                                      Expanded(
+                                        flex: 1,
+                                        child: Center(
+                                          child: Text(
+                                            'Do not translate',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurfaceVariant,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
-                                          // Examples
+                                        ),
+                                      ),
+                                      
+                                      // Case Sensitive column
+                                      Expanded(
+                                        flex: 1,
+                                        child: Center(
+                                          child: Text(
+                                            'Case sensitive',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurfaceVariant,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                      
+                                      const SizedBox(width: 16),
+                                      
+                                      // Examples column
                                           Expanded(
                                             flex: 3,
                                             child: Text(
@@ -533,41 +693,14 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 color: colorScheme.onSurfaceVariant,
-                                                fontSize: 14,
+                                                fontSize: 12,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
+                                              textAlign: TextAlign.left,
                                             ),
                                           ),
-                                          // Do not translate
-                                          Expanded(
-                                            flex: 1,
-                                            child: Center(
-                                              child: Text(
-                                                'Do not translate',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: colorScheme.onSurfaceVariant,
-                                                  fontSize: 14,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ),
-                                          // Case sensitive
-                                          Expanded(
-                                            flex: 1,
-                                            child: Center(
-                                              child: Text(
-                                                'Case sensitive',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: colorScheme.onSurfaceVariant,
-                                                  fontSize: 14,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ),
-                                          // Actions
+                                      
+                                      // Actions column
                                           Expanded(
                                             flex: 1,
                                             child: Center(
@@ -576,16 +709,15 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                   color: colorScheme.onSurfaceVariant,
-                                                  fontSize: 14,
+                                                  fontSize: 12,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
-                                        ]
-                                      else
-                                        // Regular terms tab columns
-                                        ...[
+                                    ] else ...[
+                                      // Translation column
                                           Expanded(
                                             flex: 2,
                                             child: Text(
@@ -593,10 +725,14 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 color: colorScheme.onSurfaceVariant,
-                                                fontSize: 14,
+                                                fontSize: 12,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
+                                              textAlign: TextAlign.left,
                                             ),
                                           ),
+                                      
+                                      // Confirmed column
                                           Expanded(
                                             flex: 1,
                                             child: Center(
@@ -605,12 +741,15 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                   color: colorScheme.onSurfaceVariant,
-                                                  fontSize: 14,
+                                                  fontSize: 12,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
+                                      
+                                      // Example column
                                           Expanded(
                                             flex: 2,
                                             child: Text(
@@ -618,20 +757,27 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 color: colorScheme.onSurfaceVariant,
-                                                fontSize: 14,
+                                                fontSize: 12,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
+                                              textAlign: TextAlign.left,
                                             ),
                                           ),
-                                          SizedBox(
-                                            width: 60,
+                                      
+                                      // Actions column
+                                      Expanded(
+                                        flex: 1,
+                                        child: Center(
                                             child: Text(
                                               'Actions',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 color: colorScheme.onSurfaceVariant,
-                                                fontSize: 14,
+                                                fontSize: 12,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                               textAlign: TextAlign.center,
+                                          ),
                                             ),
                                           ),
                                         ],
@@ -641,18 +787,72 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                 
                                 Expanded(
                                   child: _selectedTabIndex == 0 || !_showAIReviewTabs
-                                    ? _buildTermsTable(glossaryService, colorScheme, textTheme)
-                                    : _buildAISuggestionsTable(glossaryService, colorScheme, textTheme),
+                                  ? buildTermsTable(
+                                      context, 
+                                      glossaryService, 
+                                      colorScheme, 
+                                      textTheme, 
+                                      _searchQuery, 
+                                      _selectedTermIds, // Pass the set
+                                      (termId, isSelected) { // Define the toggle logic
+                                        setState(() {
+                                          if (isSelected == true) {
+                                            _selectedTermIds.add(termId);
+                                          } else {
+                                            _selectedTermIds.remove(termId);
+                                          }
+                                        });
+                                      },
+                                    )
+                                  : buildAISuggestionsTable(
+                                      context, 
+                                      glossaryService, 
+                                      colorScheme, 
+                                      textTheme, 
+                                      _searchQuery,
+                                      _selectedExamples,
+                                      _selectedTermIds, // Pass the same set used for terms
+                                      (String termId, int exampleIndex, bool? value) {
+                                        setState(() {
+                                          // Initialize set if it doesn't exist
+                                          if (!_selectedExamples.containsKey(termId)) {
+                                            _selectedExamples[termId] = {};
+                                          }
+                                          
+                                          // Toggle example selection
+                                          if (value == true) {
+                                            _selectedExamples[termId]!.add(exampleIndex);
+                                          } else {
+                                            _selectedExamples[termId]!.remove(exampleIndex);
+                                          }
+                                        });
+                                      },
+                                      (String termId, bool? isSelected) { // Add handler for term selection
+                                        setState(() {
+                                          if (isSelected == true) {
+                                            _selectedTermIds.add(termId);
+                                          } else {
+                                            _selectedTermIds.remove(termId);
+                                          }
+                                        });
+                                      },
+                                      () {
+                                        // Switch back to the Terms tab when a term is accepted
+                                        setState(() {
+                                          _selectedTabIndex = 0;
+                                        });
+                                      },
+                                      _showDetectionDialog,
+                                    ),
                                 ),
                               ],
-                            ),
                           ),
                         ),
                       ],
-                    ),
                   ),
                 ),
               ],
+              ),
             ),
           ),
           VerticalDivider(thickness: 1, width: 1, color: colorScheme.outline.withOpacity(0.2)),
@@ -696,324 +896,72 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
     );
   }
 
-  // Helper method to build the terms table
-  Widget _buildTermsTable(GlossaryService glossaryService, ColorScheme colorScheme, TextTheme textTheme) {
-    return glossaryService.allTerms.isEmpty 
-      ? Center(child: Text("No terms in glossary.", style: textTheme.bodyMedium)) 
-      : ListView.builder(
-        itemCount: glossaryService.allTerms.length,
-        itemBuilder: (context, index) {
-          final term = glossaryService.allTerms[index];
-          final isEven = index % 2 == 0;
-          
-          return Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: isEven ? colorScheme.surface : colorScheme.surfaceVariant.withOpacity(0.3),
-              border: Border(
-                bottom: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
-              ),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 40,
-                  child: Checkbox(
-                    value: false,
-                    onChanged: (value) {},
+  // Method to delete selected terms
+  void _deleteSelectedTerms() {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete term'),
+        content: const Text('Are you sure you want to delete the selected term?'),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    term.text,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    term.translation ?? 'This term is not translatable',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                      fontStyle: term.translation == null ? FontStyle.italic : FontStyle.normal,
-                      color: term.translation == null ? Colors.grey.shade600 : ColorUtils.textPrimaryColor(context),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Checkbox(
-                      value: index == 5,
-                      onChanged: (value) {},
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    term.examples.isNotEmpty ? term.examples[0] : '-',
-                    style: const TextStyle(
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(
-                  width: 60,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.more_vert),
-                        onPressed: () {
-                          // TODO: Implement action menu (edit, delete, etc.)
-                        },
-                        iconSize: 20,
-                        splashRadius: 20,
-                        visualDensity: VisualDensity.compact,
-                        tooltip: 'Actions',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
-          );
-        },
-      );
-  }
+          ),
+          TextButton(
+                        onPressed: () {
+              // Delete the selected terms
+              Navigator.of(context).pop();
 
-  // Helper method to build the AI suggestions table
-  Widget _buildAISuggestionsTable(GlossaryService glossaryService, ColorScheme colorScheme, TextTheme textTheme) {
-    return glossaryService.aiSuggestedTerms.isEmpty 
-      ? Center(child: Text("No AI term suggestions.", style: textTheme.bodyMedium)) 
-      : ListView.builder(
-          itemCount: glossaryService.aiSuggestedTerms.length,
-          itemBuilder: (context, index) {
-            final term = glossaryService.aiSuggestedTerms[index];
-            final isEven = index % 2 == 0;
-            
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isEven ? colorScheme.surface : colorScheme.surfaceVariant.withOpacity(0.3),
-                border: Border(
-                  bottom: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
-                ),
+              // Get access to the glossary service
+              final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+
+              // Process all selected terms
+              for (final termId in _selectedTermIds.toList()) {
+                // Find the term with this ID
+                final term = glossaryService.allTerms.firstWhere(
+                  (t) => t.id == termId,
+                  orElse: () => null as Term, // This is typecasting, not actual null
+                );
+
+                if (term != null) {
+                  // Check if it's a glossary term or an accepted AI term
+                  final isGlossaryTerm = glossaryService.glossaryTerms.contains(term);
+                  
+                  if (isGlossaryTerm) {
+                    // Remove from glossary
+                    glossaryService.removeTerm(term);
+                  } else {
+                    // Remove from accepted AI terms
+                    glossaryService.removeAcceptedAITerm(term);
+                  }
+                }
+              }
+
+              // Clear selection
+              setState(() {
+                _selectedTermIds.clear();
+              });
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onError,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Term
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          term.text,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      
-                      // Usage score
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          '${term.usageScore.toInt()}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      
-                      // Examples section
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Select examples to include:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ...term.examples.take(2).map((example) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 4.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: Checkbox(
-                                        value: false,
-                                        onChanged: (value) {},
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            example,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          Text(
-                                            'Found on: dogs/boci/',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
-                      ),
-                      
-                      // Do not translate switch
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: Transform.scale(
-                            scale: 0.7,
-                            child: Switch.adaptive(
-                              value: term.doNotTranslate,
-                              onChanged: (value) {},
-                              activeColor: colorScheme.primary,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
-                              thumbColor: MaterialStatePropertyAll(term.doNotTranslate 
-                                ? colorScheme.onPrimary 
-                                : Colors.grey.shade400),
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      // Case sensitive switch
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: Transform.scale(
-                            scale: 0.7,
-                            child: Switch.adaptive(
-                              value: term.caseSensitive,
-                              onChanged: (value) {},
-                              activeColor: colorScheme.primary,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
-                              thumbColor: MaterialStatePropertyAll(term.caseSensitive 
-                                ? colorScheme.onPrimary 
-                                : Colors.grey.shade400),
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      // Action buttons - Swap order: Add first, then Reject
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Add button - Now first
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // Accept the AI suggestion
-                                glossaryService.acceptAISuggestion(term);
-                                setState(() {}); // Refresh UI
-                              },
-                              icon: const Icon(Icons.add, size: 14),
-                              label: const Padding(
-                                padding: EdgeInsets.only(right: 2),
-                                child: Text('Add'),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE8F5E9),
-                                foregroundColor: const Color(0xFF388E3C),
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                minimumSize: const Size(0, 30),
-                                maximumSize: const Size(85, 30),
-                                elevation: 0,
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            // Reject button - Now second
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // Reject the AI suggestion
-                                glossaryService.rejectAISuggestion(term);
-                                setState(() {}); // Refresh UI
-                              },
-                              icon: const Icon(Icons.close, size: 14),
-                              label: const Padding(
-                                padding: EdgeInsets.only(right: 2),
-                                child: Text('Reject'),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFE8E8),
-                                foregroundColor: const Color(0xFFD32F2F),
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                minimumSize: const Size(0, 30),
-                                maximumSize: const Size(85, 30),
-                                elevation: 0,
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            ),
+            child: const Text('Delete'),
                   ),
                 ],
               ),
-            );
-          },
         );
   }
 } 

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../models/term.dart';
 import '../../config/colors.dart';
-import 'no_terms_widget.dart';
 
 class TermTable extends StatelessWidget {
   final List<Term> terms;
@@ -10,8 +9,6 @@ class TermTable extends StatelessWidget {
   final Function(Term, bool) onCaseSensitiveToggle;
   final Function(Term) onAddTerm;
   final Function(Term) onRejectTerm;
-  final VoidCallback? onDetectTerms;
-  final VoidCallback? onTranslate;
 
   const TermTable({
     super.key,
@@ -20,8 +17,6 @@ class TermTable extends StatelessWidget {
     required this.onCaseSensitiveToggle,
     required this.onAddTerm,
     required this.onRejectTerm,
-    this.onDetectTerms,
-    this.onTranslate,
   });
 
   @override
@@ -137,10 +132,62 @@ class TermTable extends StatelessWidget {
           ...terms.map((term) => _buildTermRow(context, term)),
         
         // Empty state
-        if (terms.isEmpty && onDetectTerms != null)
-          NoTermsWidget(
-            onDetectTerms: onDetectTerms!,
-            onTranslate: onTranslate,
+        if (terms.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(36),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300),
+                left: BorderSide(color: Colors.grey.shade300),
+                right: BorderSide(color: Colors.grey.shade300),
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                Icon(
+                  Icons.list_alt_outlined,
+                  size: 48,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'There are no more term candidates to review',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: ColorUtils.textPrimaryColorValue,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Run again if you\'ve added new content to your website.',
+                  style: const TextStyle(
+                    color: ColorUtils.textSecondaryColorValue,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Detect terms'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorUtils.primaryColorValue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           
         // Bottom border when we have items
@@ -256,7 +303,7 @@ class TermTable extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 32),
                       child: Text(
-                        'Found on: ${term.exampleSources[index]}',
+                        'Found on: ${term.exampleSources?[index] ?? 'unknown location'}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: ColorUtils.textTertiaryColorValue,

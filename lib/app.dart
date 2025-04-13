@@ -2,41 +2,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'config/routes.dart';
+import 'config/theme.dart';
 
 class GlossaryApp extends StatelessWidget {
-  final ColorScheme lightColorScheme;
-  final ColorScheme darkColorScheme;
-
-  const GlossaryApp({
-    super.key,
-    required this.lightColorScheme,
-    required this.darkColorScheme,
-  });
+  const GlossaryApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Create ThemeData from the loaded ColorSchemes
+    // Create standard themes
     final lightTheme = ThemeData(
-      colorScheme: lightColorScheme,
+      colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       useMaterial3: true,
-      textTheme: GoogleFonts.interTextTheme(ThemeData(brightness: Brightness.light).textTheme),
-      // Add other theme customizations for light mode if needed
-      // e.g., scaffoldBackgroundColor: lightColorScheme.background,
+      textTheme: GoogleFonts.notoSansTextTheme(ThemeData.light().textTheme),
     );
 
     final darkTheme = ThemeData(
-      colorScheme: darkColorScheme,
+      colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
       useMaterial3: true,
-      textTheme: GoogleFonts.interTextTheme(ThemeData(brightness: Brightness.dark).textTheme),
-      // Add other theme customizations for dark mode if needed
-      // e.g., scaffoldBackgroundColor: darkColorScheme.background,
+      textTheme: GoogleFonts.notoSansTextTheme(ThemeData.dark().textTheme),
     );
 
-    // Note: MultiProvider is now in main.dart
     return MaterialApp(
       title: 'Easyling',
-      theme: lightTheme, // Use generated light theme
-      darkTheme: darkTheme, // Use generated dark theme
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: ThemeMode.light, // Or ThemeMode.dark or ThemeMode.system
       routes: AppRoutes.getRoutes(),
       initialRoute: AppRoutes.mainGlossary,

@@ -29,7 +29,7 @@ class DetectionFinishedBanner extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 24.0, right: 24.0), // Add margins
        decoration: BoxDecoration(
          color: backgroundColor,
-         borderRadius: BorderRadius.circular(8),
+         borderRadius: BorderRadius.circular(12),
        ),
       child: Row(
         children: [

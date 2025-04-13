@@ -40,6 +40,14 @@ class _DetectTermsScreenState extends State<DetectTermsScreen> with SingleTicker
             const LogoPlaceholder(height: 36),
             const SizedBox(width: 16),
             const Text('Glossary'),
+            const SizedBox(width: 8),
+            Text(
+              'TEST',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
         actions: [
@@ -508,150 +516,187 @@ class _DetectTermsScreenState extends State<DetectTermsScreen> with SingleTicker
   
   // AI suggestions table matching the provided image
   Widget buildAISuggestionsTable(List<Term> terms) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          // Table header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(top: 8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-              ),
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.red,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Term',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                      fontSize: 14,
+                // Table header row
+                Row(
+                  children: [
+                    // Checkbox for Term
+                    Container(
+                      width: 40,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Checkbox(
+                        value: false,
+                        onChanged: (value) {},
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Row(
-                    children: [
-                      Text(
-                        'Usage score',
+                    
+                    // Term
+                    Container(
+                      width: 120,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Term',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: Colors.grey.shade700,
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.sort,
-                        size: 16,
-                        color: Colors.grey.shade700,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Examples',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                      fontSize: 14,
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      'Do not translate',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      'Case sensitive',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Center(
-                    child: Text(
-                      'Actions',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Table rows
-          Expanded(
-            child: terms.isEmpty
-                ? Center(
-                    child: Text(
-                      'No AI suggestions to display',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 16,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: terms.length,
-                    itemBuilder: (context, index) {
-                      final term = terms[index];
-                      
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    
+                    // Usage score (moved closer to Term)
+                    Container(
+                      width: 100,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border(
-                                bottom: BorderSide(color: Colors.grey.shade200),
-                              ),
+                          Text(
+                            'Usage score',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade700,
+                              fontSize: 14,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Term
-                                Expanded(
-                                  flex: 2,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.sort,
+                            size: 16,
+                            color: Colors.grey.shade700,
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Examples
+                    Container(
+                      width: 400,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Examples',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    
+                    // Do not translate
+                    Container(
+                      width: 150,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Text(
+                          'Do not translate',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade800,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    
+                    // Case sensitive
+                    Container(
+                      width: 150,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Text(
+                          'Case sensitive',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade800,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    
+                    // Actions
+                    Container(
+                      width: 200,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Text(
+                          'Actions',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                // Divider between header and content
+                Divider(color: Colors.grey.shade300, height: 1),
+                
+                // Table content
+                Container(
+                  height: constraints.maxHeight - 70, // Account for header and margins
+                  child: terms.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No AI suggestions to display',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: terms.length,
+                          separatorBuilder: (context, index) => Divider(
+                            color: Colors.grey.shade200,
+                            height: 1,
+                          ),
+                          itemBuilder: (context, index) {
+                            final term = terms[index];
+                            
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Checkbox for term selection
+                                  Container(
+                                    width: 40,
+                                    child: Checkbox(
+                                      value: false,
+                                      onChanged: (value) {},
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                
+                                  // Term
+                                  Container(
+                                    width: 120,
                                     child: Text(
                                       term.text,
                                       style: const TextStyle(
@@ -660,13 +705,10 @@ class _DetectTermsScreenState extends State<DetectTermsScreen> with SingleTicker
                                       ),
                                     ),
                                   ),
-                                ),
-                                
-                                // Usage score
-                                Expanded(
-                                  flex: 1,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
+                                  
+                                  // Usage score
+                                  Container(
+                                    width: 100,
                                     child: Text(
                                       '${term.usageScore.toInt()}',
                                       style: const TextStyle(
@@ -675,154 +717,162 @@ class _DetectTermsScreenState extends State<DetectTermsScreen> with SingleTicker
                                       ),
                                     ),
                                   ),
-                                ),
-                                
-                                // Examples
-                                Expanded(
-                                  flex: 3,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Select examples to include:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
+                                  
+                                  // Examples
+                                  Container(
+                                    width: 400,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Select examples to include:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 14,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      ...term.examples.take(2).map((example) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 4.0),
-                                          child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: Checkbox(
-                                                  value: false,
-                                                  onChanged: (value) {},
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(4),
+                                        const SizedBox(height: 8),
+                                        ...term.examples.take(2).map((example) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 4.0),
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child: Checkbox(
+                                                    value: false,
+                                                    onChanged: (value) {},
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      example,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        example,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                        ),
                                                       ),
-                                                    ),
-                                                    Text(
-                                                      'Found on: dogs/boci/',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey.shade600,
+                                                      Text(
+                                                        'Found on: dogs/boci/',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey.shade600,
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ],
-                                  ),
-                                ),
-                                
-                                // Do not translate
-                                Expanded(
-                                  flex: 1,
-                                  child: Center(
-                                    child: Switch(
-                                      value: term.doNotTranslate,
-                                      onChanged: (value) {},
-                                      activeColor: Colors.blue,
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                
-                                // Case sensitive
-                                Expanded(
-                                  flex: 1,
-                                  child: Center(
-                                    child: Switch(
-                                      value: term.caseSensitive,
-                                      onChanged: (value) {},
-                                      activeColor: Colors.blue,
+                                  
+                                  // Do not translate
+                                  Container(
+                                    width: 150,
+                                    child: Center(
+                                      child: Switch(
+                                        value: term.doNotTranslate,
+                                        onChanged: (value) {
+                                          final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                          final updatedTerm = term.copyWith(doNotTranslate: value);
+                                          glossaryService.updateAISuggestion(updatedTerm);
+                                          setState(() {});
+                                        },
+                                        activeColor: Colors.blue,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                
-                                // Actions
-                                Expanded(
-                                  flex: 1,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Reject button
-                                      ElevatedButton.icon(
-                                        onPressed: () {
-                                          // Handle reject action
+                                  
+                                  // Case sensitive
+                                  Container(
+                                    width: 150,
+                                    child: Center(
+                                      child: Switch(
+                                        value: term.caseSensitive,
+                                        onChanged: (value) {
                                           final glossaryService = Provider.of<GlossaryService>(context, listen: false);
-                                          glossaryService.rejectAISuggestion(term);
+                                          final updatedTerm = term.copyWith(caseSensitive: value);
+                                          glossaryService.updateAISuggestion(updatedTerm);
+                                          setState(() {});
                                         },
-                                        icon: const Icon(Icons.close, size: 16),
-                                        label: const Text('Reject'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFFFE8E8),
-                                          foregroundColor: const Color(0xFFD32F2F),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                                          minimumSize: const Size(0, 32),
-                                          elevation: 0,
-                                          textStyle: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
+                                        activeColor: Colors.blue,
                                       ),
-                                      const SizedBox(width: 8),
-                                      // Add button
-                                      ElevatedButton.icon(
-                                        onPressed: () {
-                                          // Handle add action
-                                          final glossaryService = Provider.of<GlossaryService>(context, listen: false);
-                                          glossaryService.acceptAISuggestion(term);
-                                        },
-                                        icon: const Icon(Icons.add, size: 16),
-                                        label: const Text('Add'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFE8F5E9),
-                                          foregroundColor: const Color(0xFF388E3C),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                                          minimumSize: const Size(0, 32),
-                                          elevation: 0,
-                                          textStyle: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                                  
+                                  // Actions
+                                  Container(
+                                    width: 200,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        // Reject button
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            // Handle reject action
+                                            final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                            glossaryService.rejectAISuggestion(term);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFFFE8E8),
+                                            foregroundColor: const Color(0xFFD32F2F),
+                                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                                            minimumSize: const Size(80, 32),
+                                            elevation: 0,
+                                            textStyle: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          child: const Text('Reject'),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // Add button
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            // Handle add action
+                                            final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                            glossaryService.acceptAISuggestion(term);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFE8F5E9),
+                                            foregroundColor: const Color(0xFF388E3C),
+                                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                                            minimumSize: const Size(80, 32),
+                                            elevation: 0,
+                                            textStyle: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          child: const Text('Add'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      }
     );
   }
 }
