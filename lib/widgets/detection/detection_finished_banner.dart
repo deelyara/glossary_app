@@ -19,18 +19,16 @@ class DetectionFinishedBanner extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     
     // Use the specific success color requested
-    final backgroundColor = const Color(0xFFCFEBCB); // Exact color specified
-    final textColor = const Color(0xFF2E5029); // Dark green for text
-    final borderColor = const Color(0xFF88C97B).withOpacity(0.5); // Lighter green border
-
+    final backgroundColor = const Color(0xFFCFEBCB); // Light green background
+    final textColor = const Color(0xFF2E5029); // Dark green text
+    
     return Container(
-      // Match styling from the image (light green background)
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      margin: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 24.0, right: 24.0), // Add margins
-       decoration: BoxDecoration(
-         color: backgroundColor,
-         borderRadius: BorderRadius.circular(12),
-       ),
+      margin: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 24.0, right: 24.0),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -44,10 +42,10 @@ class DetectionFinishedBanner extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4), // Increased spacing
+                const SizedBox(height: 4),
                 Text(
-                  'We found $termCount potential terms in your content. Click "Review candidates" to start adding them to your glossary.',
-                  style: textTheme.bodyMedium?.copyWith( // Use bodyMedium for slightly larger text
+                  'We found potential terms in your content. Click "Review candidates" to start adding them to your glossary.',
+                  style: textTheme.bodyMedium?.copyWith(
                     color: textColor,
                   ),
                 ),
@@ -55,29 +53,17 @@ class DetectionFinishedBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Regular filled button without icon
           FilledButton(
-            onPressed: () {
-              // Use the callback if provided, otherwise navigate to the DetectTermsScreen
-              if (onReviewCandidates != null) {
-                onReviewCandidates!();
-              } else {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.detectTerms,
-                  arguments: {'initialTabIndex': 1} // Pass argument to select tab
-                );
-              }
-            },
+            onPressed: onReviewCandidates,
             style: FilledButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Increased padding
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20), // Rounded to pill shape like other buttons
+                borderRadius: BorderRadius.circular(20),
               ),
-              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500), // Use labelLarge
+              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
             ),
             child: const Text('Review candidates'),
           ),

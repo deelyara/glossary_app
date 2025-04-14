@@ -11,6 +11,7 @@ import '../widgets/common/right_sidebar.dart';
 import '../widgets/detection/detection_dialog.dart';
 import '../widgets/detection/detection_progress_banner.dart';
 import '../widgets/detection/detection_finished_banner.dart';
+import '../widgets/detection/detection_second_run_banner.dart';
 import '../config/colors.dart';
 import 'main_glossary_screen_fix.dart';
 
@@ -36,6 +37,7 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
 
   // State variables to track detection progress
   bool _detectionFinished = false; // State for finished detection
+  bool _showSecondRunBanner = false; // State for showing second run banner
   bool _isSearchActive = false; // Add state to track if search is active
   bool _showAIReviewTabs = false; // Add state to track if AI review tabs should be shown
   int _selectedTabIndex = 0; // Track selected tab index
@@ -57,11 +59,21 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
 
   // Helper to get currently filtered terms (needed for select all)
   List<Term> _getFilteredTerms(GlossaryService service) {
-    return _searchQuery.isEmpty
-        ? service.allTerms
-        : service.allTerms.where(
-            (term) => term.text.toLowerCase().contains(_searchQuery.toLowerCase())
-          ).toList();
+    if (_selectedTabIndex == 0 || !_showAIReviewTabs) {
+      // For Terms tab
+      return _searchQuery.isEmpty
+          ? service.allTerms
+          : service.allTerms.where(
+              (term) => term.text.toLowerCase().contains(_searchQuery.toLowerCase())
+            ).toList();
+    } else {
+      // For AI suggestions tab
+      return _searchQuery.isEmpty
+          ? service.aiSuggestedTerms
+          : service.aiSuggestedTerms.where(
+              (term) => term.text.toLowerCase().contains(_searchQuery.toLowerCase())
+            ).toList();
+    }
   }
 
   // Toggle selection for all visible terms
@@ -78,6 +90,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
   }
 
   void _showDetectionDialog() {
+    final detectionService = Provider.of<DetectionService>(context, listen: false);
+    
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -92,7 +106,22 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    
+    // Connect the detection service to the glossary service
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+      final detectionService = Provider.of<DetectionService>(context, listen: false);
+      
+      glossaryService.setDetectionService(detectionService);
+    });
+  }
+
   void _startDetection() {
+    final detectionService = Provider.of<DetectionService>(context, listen: false);
+    
     // Show a snack bar for detection progress instead of banner
     final snackBar = SnackBar(
       content: Text(
@@ -110,19 +139,52 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
     
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-    // Simulate detection finishing after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-       if (mounted) { // Check if widget is still in the tree
+    // Check if this is first detection run
+    if (detectionService.detectionRunCount == 0) {
+      // For the first run
+      detectionService.detectTerms().then((_) {
+        if (mounted) {
           setState(() {
-            _detectionFinished = true; // Set finished state to true
+            _detectionFinished = true;
+            _showSecondRunBanner = false;
           });
-       }
+        }
+      });
+    } else {
+      // For second and later runs
+      detectionService.detectMoreTerms().then((_) {
+        if (mounted) {
+          // Update the AI suggestions immediately for second+ runs
+          _updateAISuggestionsWithDetectedTerms();
+          setState(() {
+            _detectionFinished = true;
+            _showSecondRunBanner = true;
+          });
+        }
+      });
+    }
+  }
+
+  // Method to update AI suggestions with the latest detected terms
+  void _updateAISuggestionsWithDetectedTerms() {
+    final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+    final detectionService = Provider.of<DetectionService>(context, listen: false);
+    
+    // Add the detected terms to the AI suggestions
+    glossaryService.addAISuggestedTerms(detectionService.detectedTerms);
+    
+    // Show the AI suggestions tab
+    setState(() {
+      _showAIReviewTabs = true;
+      _selectedTabIndex = 1;
+      _detectionFinished = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final glossaryService = Provider.of<GlossaryService>(context);
+    final detectionService = Provider.of<DetectionService>(context);
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -196,13 +258,17 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                 ),
 
                 // Conditionally display detection banners here
-                if (_detectionFinished) // Show finished banner when done
+                if (_detectionFinished && !_showSecondRunBanner && detectionService.detectionRunCount == 1) // Only show first run banner on first detection
                   DetectionFinishedBanner(
-                    onReviewCandidates: () {
+                    onReviewCandidates: _updateAISuggestionsWithDetectedTerms,
+                  ),
+                  
+                if (_showSecondRunBanner) // Show second run banner (dismissable)
+                  DetectionSecondRunBanner(
+                    onDismiss: () {
                       setState(() {
-                        _showAIReviewTabs = true; // Show the AI review tabs
-                        _selectedTabIndex = 1; // Select the AI suggestions tab
-                          _detectionFinished = false; // Hide the banner after clicking
+                        _showSecondRunBanner = false; // Hide the banner when dismissed
+                        _detectionFinished = false; // Also reset detection finished flag
                       });
                     },
                   ),
@@ -471,6 +537,25 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end, // Align to the end
                               children: [
+                                // Show Reject All button when AI suggestions are selected
+                                if (_selectedTabIndex == 1 && _showAIReviewTabs && _selectedTermIds.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.errorContainer.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: TextButton.icon(
+                                      onPressed: _rejectSelectedAISuggestions,
+                                      icon: const Icon(Icons.delete_outline, size: 18),
+                                      label: const Text('Reject all'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: colorScheme.error,
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                      ),
+                                    ),
+                                  ),
+                                
                                 // Show the custom buttons only when Terms tab is active
                                 if (_selectedTabIndex == 0 || !_showAIReviewTabs)
                                   Row(
@@ -486,73 +571,75 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                              foregroundColor: colorScheme.error,
                                            ),
                                          ),
-                                        // Add term button
+                                       
+                                       // Detect terms button - moved to before Add new term
+                                       Tooltip(
+                                         message: 'Detect terms with AI',
+                                         child: OutlinedButton.icon(
+                                           onPressed: _showDetectionDialog,
+                                           icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                                           label: const Text('Detect terms'),
+                                           style: OutlinedButton.styleFrom(
+                                             foregroundColor: colorScheme.primary,
+                                             side: BorderSide(color: colorScheme.primary),
+                                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                             shape: RoundedRectangleBorder(
+                                               borderRadius: BorderRadius.circular(20),
+                                             ),
+                                             textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                           ),
+                                         ),
+                                       ),
+                                       
+                                       const SizedBox(width: 8), // Add space between buttons
+                                        
+                                        // Add term button - now without icon
                                         Tooltip(
                                           message: 'Add new term',
-                                          child: FilledButton.icon(
+                                          child: FilledButton(
                                             onPressed: () {},
-                                            icon: const Icon(Icons.add, size: 18),
-                                            label: const Text('Add term'),
-                              style: FilledButton.styleFrom(
-                                foregroundColor: colorScheme.onPrimary,
-                                backgroundColor: colorScheme.primary,
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                   borderRadius: BorderRadius.circular(20),
-                                ),
-                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
-                                elevation: 0,
-                              ),
-                            ),
+                                            child: const Text('Add new term'),
+                                            style: FilledButton.styleFrom(
+                                              foregroundColor: colorScheme.onPrimary,
+                                              backgroundColor: colorScheme.primary,
+                                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                              elevation: 0,
+                                            ),
+                                          ),
                                         ),
+                                        
                                         const SizedBox(width: 8), // Add space between Add and Translate
+                                        
                                         // Translate terms button with tooltip
                                         Tooltip(
-                                          message: 'Translate terms with AI',
+                                          message: _isAnyTermSelected ? 'Translate terms with AI' : 'Select term to translate with AI',
                                           child: FilledButton.icon(
                                             // Disable if no terms are selected
                                             onPressed: _isAnyTermSelected ? () { 
                                               // TODO: Implement translation logic for selected terms
                                               print('Translating: ${_selectedTermIds.join(', ')}');
                                             } : null,
-                              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                                            label: const Text('Translate terms'),
-                              style: FilledButton.styleFrom(
-                                foregroundColor: colorScheme.onPrimary,
-                                backgroundColor: colorScheme.primary,
+                                            icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                                            label: const Text('Translate'),
+                                            style: FilledButton.styleFrom(
+                                              foregroundColor: colorScheme.onPrimary,
+                                              backgroundColor: colorScheme.primary,
                                               // Let the theme handle disabled state colors
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                   borderRadius: BorderRadius.circular(20),
-                                ),
-                                textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+                                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 8), // Space before Detect button
                                     ], // End of "Terms" specific buttons row
                                   ),
-                                  
-                                // Detect terms button - only show if not on AI suggestions tab
-                                if (_selectedTabIndex == 0 || !_showAIReviewTabs)
-                                  Tooltip(
-                                    message: 'Detect terms with AI',
-                                    child: OutlinedButton.icon(
-                                      onPressed: _showDetectionDialog,
-                                      icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                                      label: const Text('Detect terms'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: colorScheme.primary,
-                                        side: BorderSide(color: colorScheme.primary),
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
-                                      ),
-                              ),
-                            ),
-                         ],
+                            ],
                             ),
                           ],
                         ),
@@ -617,16 +704,18 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                     
                                     // Term column
                                       Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'Term',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: colorScheme.onSurfaceVariant,
-                                            fontSize: 12,
-                                            overflow: TextOverflow.ellipsis,
+                                        flex: 1,
+                                        child: Center(
+                                          child: Text(
+                                            'Term',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: colorScheme.onSurfaceVariant,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            textAlign: TextAlign.center,
                                           ),
-                                          textAlign: TextAlign.left,
                                         ),
                                       ),
                                     
@@ -636,16 +725,40 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                           Expanded(
                                             flex: 1,
                                         child: Center(
-                                          child: Text(
-                                            'Usage Score',
+                                          child: InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                _usageScoreSortAscending = !_usageScoreSortAscending;
+                                                _isUsageScoreSorted = true;
+                                                // Here we would also call a sorting function
+                                                // in the GlossaryService
+                                                final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                                glossaryService.sortAISuggestionsByUsageScore(_usageScoreSortAscending);
+                                              });
+                                            },
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  'Usage score',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     color: colorScheme.onSurfaceVariant,
                                                     fontSize: 12,
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
-                                                  textAlign: TextAlign.center,
                                                 ),
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  _isUsageScoreSorted
+                                                      ? (_usageScoreSortAscending ? Icons.arrow_upward : Icons.arrow_downward)
+                                                      : Icons.sort,
+                                                  size: 16,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       
@@ -687,16 +800,18 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                       
                                       // Examples column
                                           Expanded(
-                                            flex: 3,
-                                            child: Text(
-                                              'Examples',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: colorScheme.onSurfaceVariant,
-                                                fontSize: 12,
-                                                overflow: TextOverflow.ellipsis,
+                                            flex: 4,
+                                            child: Center(
+                                              child: Text(
+                                                'Example',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                  fontSize: 12,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                textAlign: TextAlign.center,
                                               ),
-                                              textAlign: TextAlign.left,
                                             ),
                                           ),
                                       
@@ -720,15 +835,17 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                       // Translation column
                                           Expanded(
                                             flex: 2,
-                                            child: Text(
-                                              'Translation',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: colorScheme.onSurfaceVariant,
-                                                fontSize: 12,
-                                                overflow: TextOverflow.ellipsis,
+                                            child: Center(
+                                              child: Text(
+                                                'Translation',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                  fontSize: 12,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                textAlign: TextAlign.center,
                                               ),
-                                              textAlign: TextAlign.left,
                                             ),
                                           ),
                                       
@@ -752,15 +869,17 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                       // Example column
                                           Expanded(
                                             flex: 2,
-                                            child: Text(
-                                              'Example',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: colorScheme.onSurfaceVariant,
-                                                fontSize: 12,
-                                                overflow: TextOverflow.ellipsis,
+                                            child: Center(
+                                              child: Text(
+                                                'Example',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                  fontSize: 12,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                textAlign: TextAlign.center,
                                               ),
-                                              textAlign: TextAlign.left,
                                             ),
                                           ),
                                       
@@ -819,9 +938,9 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                             _selectedExamples[termId] = {};
                                           }
                                           
-                                          // Toggle example selection
+                                          // Toggle example selection (only index 0 is used now)
                                           if (value == true) {
-                                            _selectedExamples[termId]!.add(exampleIndex);
+                                            _selectedExamples[termId]!.add(exampleIndex); // Will always be 0
                                           } else {
                                             _selectedExamples[termId]!.remove(exampleIndex);
                                           }
@@ -837,10 +956,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                                         });
                                       },
                                       () {
-                                        // Switch back to the Terms tab when a term is accepted
-                                        setState(() {
-                                          _selectedTabIndex = 0;
-                                        });
+                                        // Don't switch back to the Terms tab when a term is accepted
+                                        // The user should be able to stay on the AI suggestions tab
                                       },
                                       _showDetectionDialog,
                                     ),
@@ -963,5 +1080,61 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                 ],
               ),
         );
+  }
+
+  void _rejectSelectedAISuggestions() {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reject terms'),
+        content: Text('Are you sure you want to reject ${_selectedTermIds.length} selected ${_selectedTermIds.length == 1 ? 'term' : 'terms'}?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+
+              // Get access to the glossary service
+              final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+
+              // Process all selected terms
+              for (final termId in _selectedTermIds.toList()) {
+                // Find the term in AI suggestions
+                final termIndex = glossaryService.aiSuggestedTerms.indexWhere((t) => t.id == termId);
+                if (termIndex >= 0) {
+                  // Get the term and reject it
+                  final term = glossaryService.aiSuggestedTerms[termIndex];
+                  glossaryService.rejectAISuggestion(term);
+                }
+              }
+
+              // Clear selection
+              setState(() {
+                _selectedTermIds.clear();
+              });
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onError,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
   }
 } 

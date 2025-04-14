@@ -20,7 +20,8 @@ void main() {
       providers: [
         // Provide the GlossaryService
         ChangeNotifierProvider(create: (_) => GlossaryService()),
-        Provider(create: (_) => DetectionService()),
+        // Use ChangeNotifierProvider for DetectionService since it extends ChangeNotifier
+        ChangeNotifierProvider(create: (_) => DetectionService()),
       ],
       child: const GlossaryApp(),
     ),

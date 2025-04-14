@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "easyling-ux-prototypes"
+  },
+  "targets": {
+    "easyling-ux-prototypes": {
+      "hosting": {
+        "glossary-app": [
+          "glossary-app"
+        ]
+      }
+    }
+  }
+}

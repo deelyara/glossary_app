@@ -1,7 +1,9 @@
 // lib/services/glossary_service.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/glossary.dart';
 import '../models/term.dart';
+import 'detection_service.dart';
 
 class GlossaryService extends ChangeNotifier {
   Glossary _currentGlossary = Glossary(
@@ -167,6 +169,14 @@ class GlossaryService extends ChangeNotifier {
   
   Glossary get currentGlossary => _currentGlossary;
 
+  // Reference to DetectionService
+  DetectionService? _detectionService;
+
+  // Method to set the detection service (will be called from main screen)
+  void setDetectionService(DetectionService service) {
+    _detectionService = service;
+  }
+
   void updateGlossary(Glossary glossary) {
     _currentGlossary = glossary;
     notifyListeners();
@@ -203,6 +213,11 @@ class GlossaryService extends ChangeNotifier {
     // Remove from AI suggestions
     _aiSuggestedTerms.removeWhere((t) => t.id == term.id);
     
+    // Mark this term as processed in the detection service
+    if (_detectionService != null) {
+      _detectionService!.markTermAsProcessed(term);
+    }
+    
     notifyListeners();
   }
   
@@ -211,12 +226,22 @@ class GlossaryService extends ChangeNotifier {
     // Just remove from suggestions
     _aiSuggestedTerms.removeWhere((t) => t.id == term.id);
     
+    // Mark this term as processed in the detection service
+    if (_detectionService != null) {
+      _detectionService!.markTermAsProcessed(term);
+    }
+    
     notifyListeners();
   }
   
   // Helper to remove a term from AI suggestions
   void _removeFromAISuggestions(Term term) {
     _aiSuggestedTerms.removeWhere((t) => t.text == term.text);
+    
+    // Mark this term as processed in the detection service
+    if (_detectionService != null) {
+      _detectionService!.markTermAsProcessed(term);
+    }
   }
   
   // Add new AI suggested terms to the list

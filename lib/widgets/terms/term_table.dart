@@ -294,7 +294,10 @@ class TermTable extends StatelessWidget {
                             child: Text(
                               example,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: ColorUtils.textPrimaryColorValue,
+                              ),
                             ),
                           ),
                         ),

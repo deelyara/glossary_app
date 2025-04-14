@@ -69,29 +69,36 @@ Widget buildTermsTable(
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
-                    // Term column
+                    // Term column - updated flex to 1 to match header
                     Expanded(
-                      flex: 2,
-                      child: Text(
-                        term.text,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
+                      flex: 1,
+                      child: Center(
+                        child: Text(
+                          term.text,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
                     // Translation column
                     Expanded(
                       flex: 2,
-                      child: Text(
-                        term.translation ?? 'This term is not translatable',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w400,
-                          fontSize: 14,
-                          fontStyle: term.translation == null ? FontStyle.italic : FontStyle.normal,
-                          color: term.translation == null ? Colors.grey.shade600 : ColorUtils.textPrimaryColor(context),
+                      child: Center(
+                        child: Text(
+                          term.translation ?? 'This term is not translatable',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            fontStyle: term.translation == null ? FontStyle.italic : FontStyle.normal,
+                            color: term.translation == null ? Colors.grey.shade600 : ColorUtils.textPrimaryColor(context),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     // Confirmed column (centered)
@@ -112,28 +119,36 @@ Widget buildTermsTable(
                     // Example column
                     Expanded(
                       flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (term.examples.isEmpty)
-                            const Text(
-                              '-',
-                              style: TextStyle(
-                                fontSize: 14,
-                              ),
-                            )
-                          else
-                            ...term.examples.map((example) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6.0),
-                              child: Text(
-                                example,
-                                style: const TextStyle(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (term.examples.isNotEmpty)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    term.examples[0],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              )
+                            else
+                              Text(
+                                'No examples available',
+                                style: TextStyle(
                                   fontSize: 14,
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            )).toList(),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     // Actions column
@@ -184,10 +199,7 @@ Widget buildAISuggestionsTable(
   
   if (filteredTerms.isEmpty && searchQuery.isEmpty) {
     // Return the empty state if there are no suggestions and no search
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0), // Increased horizontal padding to at least 16px
-      child: _buildEmptyAISuggestionsState(context, colorScheme, textTheme, onDetectPressed),
-    );
+    return _buildEmptyAISuggestionsState(context, colorScheme, textTheme, onDetectPressed);
   }
 
   return filteredTerms.isEmpty && searchQuery.isNotEmpty 
@@ -217,27 +229,33 @@ Widget buildAISuggestionsTable(
                         // Checkbox for term selection
                         SizedBox(
                           width: 40,
-                          child: Checkbox(
-                            value: selectedTermIds.contains(term.id),
-                            onChanged: (value) {
-                              onTermSelectedToggle(term.id, value);
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                          child: Center(
+                            child: Checkbox(
+                              value: selectedTermIds.contains(term.id),
+                              onChanged: (value) {
+                                onTermSelectedToggle(term.id, value);
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                         ),
 
                         // Term column
                         Expanded(
-                          flex: 2,
-                          child: Text(
-                            term.text,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
+                          flex: 1,
+                          child: Center(
+                            child: Text(
+                              term.text,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -260,18 +278,18 @@ Widget buildAISuggestionsTable(
                         Expanded(
                           flex: 1,
                           child: Center(
-                            child: Transform.scale(
-                              scale: 0.8,
-                              child: Switch(
-                                value: term.doNotTranslate,
-                                onChanged: (value) {
-                                  final updatedTerm = term.copyWith(doNotTranslate: value);
-                                  final glossaryService = Provider.of<GlossaryService>(context, listen: false);
-                                  glossaryService.updateAISuggestion(updatedTerm);
-                                },
-                                activeColor: colorScheme.primary,
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            child: Checkbox(
+                              value: term.doNotTranslate,
+                              onChanged: (value) {
+                                final updatedTerm = term.copyWith(doNotTranslate: value ?? false);
+                                final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                glossaryService.updateAISuggestion(updatedTerm);
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
                               ),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                         ),
@@ -280,18 +298,18 @@ Widget buildAISuggestionsTable(
                         Expanded(
                           flex: 1,
                           child: Center(
-                            child: Transform.scale(
-                              scale: 0.8,
-                              child: Switch(
-                                value: term.caseSensitive,
-                                onChanged: (value) {
-                                  final updatedTerm = term.copyWith(caseSensitive: value);
-                                  final glossaryService = Provider.of<GlossaryService>(context, listen: false);
-                                  glossaryService.updateAISuggestion(updatedTerm);
-                                },
-                                activeColor: colorScheme.primary,
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            child: Checkbox(
+                              value: term.caseSensitive,
+                              onChanged: (value) {
+                                final updatedTerm = term.copyWith(caseSensitive: value ?? false);
+                                final glossaryService = Provider.of<GlossaryService>(context, listen: false);
+                                glossaryService.updateAISuggestion(updatedTerm);
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
                               ),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                         ),
@@ -299,67 +317,68 @@ Widget buildAISuggestionsTable(
                         // Add more space between toggles and examples
                         const SizedBox(width: 16),
                         
-                        // Examples section
+                        // Examples column
                         Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Select examples to include:',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                          flex: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Select an example to include:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...term.examples.take(3).map((example) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 4.0),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: Checkbox(
-                                          value: selectedExamples.containsKey(term.id) && 
-                                                selectedExamples[term.id]!.contains(term.examples.indexOf(example)),
-                                          onChanged: (value) {
-                                            // Call the callback to handle example toggling
-                                            onExampleToggle(term.id, term.examples.indexOf(example), value);
-                                          },
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(4),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                const SizedBox(height: 8),
+                                ...List.generate(term.examples.length.clamp(0, 3), (index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           children: [
-                                            Text(
-                                              example,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                              ),
+                                            Radio<int>(
+                                              value: index,
+                                              groupValue: selectedExamples[term.id]?.first,
+                                              onChanged: (value) {
+                                                onExampleToggle(term.id, value ?? 0, true);
+                                              },
+                                              visualDensity: VisualDensity.compact,
+                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                             ),
-                                            Text(
-                                              'Found on: dogs/boci/',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                                            Expanded(
+                                              child: Text(
+                                                term.examples[index],
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: colorScheme.onSurface,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ],
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 30.0),
+                                          child: Text(
+                                            'Found on: ${term.exampleSources?[index] ?? 'unknown location'}',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
                           ),
                         ),
                         
@@ -369,23 +388,19 @@ Widget buildAISuggestionsTable(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              // Add button
+                              // Add button - matches glossary style
                               IconButton(
-                                icon: const Icon(Icons.add_circle_outline),
+                                icon: const Icon(Icons.check_rounded),
                                 onPressed: () {
-                                  // Get selected examples for this term
-                                  final selectedExampleIndices = selectedExamples[term.id] ?? {};
+                                  // Check if the example is selected
+                                  final isExampleSelected = selectedExamples.containsKey(term.id) && 
+                                                          selectedExamples[term.id]!.contains(0);
                                   
-                                  // Create a list of the selected examples
-                                  final selectedExampleTexts = selectedExampleIndices
-                                      .map((index) => term.examples[index])
-                                      .toList();
-                                  
-                                  // Create a new term with only the selected examples
+                                  // Create a new term with or without the example
                                   final termToAdd = term.copyWith(
-                                    examples: selectedExampleTexts.isEmpty 
-                                        ? [] // If no examples selected, add empty list
-                                        : selectedExampleTexts,
+                                    examples: isExampleSelected && term.examples.isNotEmpty
+                                        ? [term.examples[0]] // Add only the first example if selected
+                                        : [] // Otherwise add empty list
                                   );
                                   
                                   // Add term to glossary
@@ -397,11 +412,12 @@ Widget buildAISuggestionsTable(
                                 },
                                 tooltip: 'Add to glossary',
                                 iconSize: 20,
-                                color: colorScheme.primary,
+                                color: Colors.green,
                               ),
-                              // Reject button
+                              
+                              // Reject button - matches glossary style
                               IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
+                                icon: const Icon(Icons.close_rounded),
                                 onPressed: () {
                                   // Reject the term suggestion
                                   final glossaryService = Provider.of<GlossaryService>(context, listen: false);
@@ -409,7 +425,7 @@ Widget buildAISuggestionsTable(
                                 },
                                 tooltip: 'Reject term',
                                 iconSize: 20,
-                                color: Colors.grey,
+                                color: Colors.red,
                               ),
                             ],
                           ),
@@ -427,51 +443,55 @@ Widget buildAISuggestionsTable(
 
 // Helper widget for the empty AI Suggestions state
 Widget _buildEmptyAISuggestionsState(BuildContext context, ColorScheme colorScheme, TextTheme textTheme, VoidCallback onDetectPressed) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0), // Reduced vertical padding
-    decoration: BoxDecoration(
-      border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
-      borderRadius: BorderRadius.circular(12),
-      color: colorScheme.surface,
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center, // Ensure vertical centering
-      children: [
-        Flexible(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-            children: [
-              Text(
-                'There are no more term candidates to review',
-                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 2), // Reduced spacing between lines
-              Text(
-                'Run again if you\'ve added new content to your website.',
-                style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 24),
-        FilledButton.icon(
-          onPressed: onDetectPressed,
-          icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-          label: const Text('Detect terms'),
-          style: FilledButton.styleFrom(
-            foregroundColor: colorScheme.onPrimary,
-            backgroundColor: colorScheme.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10), // Slightly reduced button padding
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+  return Padding(
+    padding: const EdgeInsets.all(16.0), // Consistent 16px padding on all sides
+    child: Container(
+      width: double.infinity, // Take full width of parent
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surface,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'There are no more term candidates to review',
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Run again if you\'ve added new content to your website. Already added terms won\'t show up in this list.',
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
             ),
-            textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
           ),
-        ),
-      ],
+          const SizedBox(width: 24),
+          FilledButton.icon(
+            onPressed: onDetectPressed,
+            icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+            label: const Text('Detect terms'),
+            style: FilledButton.styleFrom(
+              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: colorScheme.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 } 
