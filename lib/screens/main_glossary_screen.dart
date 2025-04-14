@@ -276,17 +276,17 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                 // Divider between top section/banners and toolbars
                 Divider(height: 1, thickness: 1, color: colorScheme.outline.withOpacity(0.2)),
 
-                // Toolbar 1: Glossary Dropdown & Icons
+                // Toolbar with dropdowns
                 Padding(
-                  padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 8.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // First glossary dropdown
                       Container(
                         height: 36,
                         decoration: BoxDecoration(
                           border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
-                            borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12),
                           color: colorScheme.surface,
                         ),
                         child: Padding(
@@ -294,12 +294,12 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: 'First glossary update',
-                                icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
-                                style: textTheme.bodyMedium?.copyWith(color: Colors.black),
+                              icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
+                              style: textTheme.bodyMedium?.copyWith(color: Colors.black),
                               items: const [
                                 DropdownMenuItem(
                                   value: 'First glossary update',
-                                    child: Text('First glossary update', style: TextStyle(color: Colors.black)),
+                                  child: Text('First glossary update', style: TextStyle(color: Colors.black)),
                                 ),
                               ],
                               onChanged: (value) {},
@@ -308,6 +308,56 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      // Second glossary management dropdown
+                      Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
+                          borderRadius: BorderRadius.circular(12),
+                          color: colorScheme.surface,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: null,
+                              hint: Text('Manage glossaries', style: textTheme.bodyMedium?.copyWith(color: Colors.black)),
+                              icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
+                              style: textTheme.bodyMedium?.copyWith(color: Colors.black),
+                              items: [
+                                DropdownMenuItem(
+                                  enabled: false,
+                                  value: 'header',
+                                  child: Text('Manage glossaries', 
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500
+                                    )
+                                  ),
+                                ),
+                                const DropdownMenuItem(
+                                  value: 'create',
+                                  child: Text('Create new glossary', style: TextStyle(color: Colors.black)),
+                                ),
+                                const DropdownMenuItem(
+                                  value: 'view',
+                                  child: Text('View all glossaries', style: TextStyle(color: Colors.black)),
+                                ),
+                              ],
+                              onChanged: (String? value) {
+                                if (value == 'create') {
+                                  // TODO: Show create glossary dialog
+                                } else if (value == 'view') {
+                                  // TODO: Navigate to glossaries list page
+                                }
+                              },
+                              focusColor: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
                       Row(
                         children: [
                           IconButton(icon: const Icon(Icons.download_outlined), onPressed: () {}, tooltip: 'Export glossary', iconSize: 20),
