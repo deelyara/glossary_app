@@ -494,4 +494,90 @@ Widget _buildEmptyAISuggestionsState(BuildContext context, ColorScheme colorSche
       ),
     ),
   );
+}
+
+class MainGlossaryScreen extends StatefulWidget {
+  const MainGlossaryScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainGlossaryScreen> createState() => _MainGlossaryScreenState();
+}
+
+class _MainGlossaryScreenState extends State<MainGlossaryScreen> with SingleTickerProviderStateMixin {
+  int _selectedTabIndex = 0;
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          const LeftSidebar(),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      buildTermsTable(context, Provider.of<GlossaryService>(context), Theme.of(context).colorScheme, Theme.of(context).textTheme, '', Set<String>(), (termId, value) {}),
+                      buildAISuggestionsTable(context, Provider.of<GlossaryService>(context), Theme.of(context).colorScheme, Theme.of(context).textTheme, '', {}, {}, (termId, index, value) {}, (termId, value) {}, () {}, () {}),
+                    ],
+                  ),
+                ),
+                VerticalDivider(thickness: 1, width: 1, color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                const RightSidebar(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build tab
+  Widget _buildTab(int index, String label, ColorScheme colorScheme) {
+    final isSelected = _selectedTabIndex == index;
+    
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isSelected ? colorScheme.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
 } 

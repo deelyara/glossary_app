@@ -294,12 +294,12 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: 'First glossary update',
-                              icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
-                              style: textTheme.bodyMedium?.copyWith(color: Colors.black),
+                              icon: const Icon(Icons.arrow_drop_down, size: 20),
+                              style: textTheme.bodyMedium,
                               items: const [
                                 DropdownMenuItem(
                                   value: 'First glossary update',
-                                  child: Text('First glossary update', style: TextStyle(color: Colors.black)),
+                                  child: Text('First glossary update'),
                                 ),
                               ],
                               onChanged: (value) {},
@@ -321,34 +321,34 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: null,
-                              hint: Text('Manage glossaries', style: textTheme.bodyMedium?.copyWith(color: Colors.black)),
-                              icon: const Icon(Icons.arrow_drop_down, size: 20, color: Colors.black),
-                              style: textTheme.bodyMedium?.copyWith(color: Colors.black),
+                              value: 'Manage glossaries',
+                              icon: const Icon(Icons.arrow_drop_down, size: 20),
+                              style: textTheme.bodyMedium,
                               items: [
-                                DropdownMenuItem(
+                                DropdownMenuItem<String>(
+                                  value: 'Manage glossaries',
                                   enabled: false,
-                                  value: 'header',
-                                  child: Text('Manage glossaries', 
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500
-                                    )
+                                  child: Text(
+                                    'Manage glossaries',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ),
-                                const DropdownMenuItem(
-                                  value: 'create',
-                                  child: Text('Create new glossary', style: TextStyle(color: Colors.black)),
+                                const DropdownMenuItem<String>(
+                                  value: 'Create new glossary',
+                                  child: Text('Create new glossary'),
                                 ),
-                                const DropdownMenuItem(
-                                  value: 'view',
-                                  child: Text('View all glossaries', style: TextStyle(color: Colors.black)),
+                                const DropdownMenuItem<String>(
+                                  value: 'View all glossaries',
+                                  child: Text('View all glossaries'),
                                 ),
                               ],
                               onChanged: (String? value) {
-                                if (value == 'create') {
+                                if (value == 'Create new glossary') {
                                   // TODO: Show create glossary dialog
-                                } else if (value == 'view') {
+                                } else if (value == 'View all glossaries') {
                                   // TODO: Navigate to glossaries list page
                                 }
                               },
