@@ -157,8 +157,8 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
           // Update the AI suggestions immediately for second+ runs
           _updateAISuggestionsWithDetectedTerms();
           setState(() {
-            _detectionFinished = true;
-            _showSecondRunBanner = true;
+            _detectionFinished = false; // Don't show the banner
+            _showSecondRunBanner = false; // Don't show the second run banner
           });
         }
       });
@@ -321,26 +321,16 @@ class _MainGlossaryScreenState extends State<MainGlossaryScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: 'Manage glossaries',
+                              value: null,
+                              hint: Text('Manage glossaries', style: textTheme.bodyMedium),
                               icon: const Icon(Icons.arrow_drop_down, size: 20),
                               style: textTheme.bodyMedium,
-                              items: [
+                              items: const [
                                 DropdownMenuItem<String>(
-                                  value: 'Manage glossaries',
-                                  enabled: false,
-                                  child: Text(
-                                    'Manage glossaries',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                                const DropdownMenuItem<String>(
                                   value: 'Create new glossary',
                                   child: Text('Create new glossary'),
                                 ),
-                                const DropdownMenuItem<String>(
+                                DropdownMenuItem<String>(
                                   value: 'View all glossaries',
                                   child: Text('View all glossaries'),
                                 ),
